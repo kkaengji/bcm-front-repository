@@ -1,0 +1,65 @@
+name: Deploy to EC2 Instance
+
+on:
+  workflow_run:
+    workflows: [ "Build & Push Frontend App Image to ECR" ]
+    types: [ completed ]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: ap-northeast-2
+      ECR_REPOSITORY: bcm-front-repository
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Deploy to EC2 Instance
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          HOST: ${{ secrets.EC2_HOST }}
+          USER: ${{ secrets.EC2_USER }}
+        run: |
+          echo "$PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+
+          IMAGE_URI=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest
+
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${USER}@${HOST} << EOF
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_REGISTRY
+
+          docker stop bcm-front || true
+          docker rm bcm-front || true
+
+          docker pull $IMAGE_URI
+
+          docker run -d \
+            --name bcm-front \
+            -p 3000:3000 \
+            -e NEXT_PUBLIC_API_URL="https://bcm.u-jinlee1029.store" \
+            --restart unless-stopped \
+            $IMAGE_URI
+
+          docker image prune -af 
+          EOF
+
+          rm -f private_key.pem

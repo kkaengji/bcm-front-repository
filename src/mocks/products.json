@@ -1,0 +1,67 @@
+[
+  {
+    "id": 1,
+    "name": "아이폰17 프로 맥스 256GB (미개봉)",
+    "description": "최신 아이폰17 프로 맥스 256GB 모델입니다. 완전 미개봉 새제품이며, 정품 보증서 포함되어 있습니다. 코스믹 오렌지 컬러로 프리미엄 디자인과 강력한 성능을 자랑합니다. A18 Pro 칩셋, 향상된 카메라 시스템, 48MP 메인 카메라를 탑재하고 있습니다.",
+    "category": {
+      "id": 1,
+      "code": "ELECTRONICS",
+      "name": "전자기기",
+      "createdAt": "2025-01-01T00:00:00",
+      "modifiedAt": "2025-01-01T00:00:00"
+    },
+    "startPrice": 1800000,
+    "bidPrice": 1970000,
+    "bidCount": 12,
+    "bidStatus": "BIDDED",
+    "productStatus": "GOOD",
+    "thumbnail": "/product01.jpeg",
+    "imageUrls": [
+      {
+        "id": 1,
+        "imageUrl": "/product01.jpeg"
+      },
+      {
+        "id": 2,
+        "imageUrl": "/product12.png"
+      }
+    ],
+    "user": {
+      "id": 1,
+      "nickname": "테크마니아",
+      "email": "techmania@example.com",
+      "role": "USER",
+      "status": "ACTIVE",
+      "phoneNumber": "010-1234-5678",
+      "createdAt": "2025-01-01T00:00:00",
+      "modifiedAt": "2025-01-01T00:00:00",
+      "winners": [],
+      "productBids": [],
+      "products": [],
+      "orders": []
+    },
+    "createdAt": "2025-11-21T10:30:00",
+    "bidEndDate": "2026-04-30T23:59:00",
+    "modifiedAt": "2025-11-13T15:45:00",
+    "productBids": [
+      {
+        "productBidId": 1,
+        "price": 1850000,
+        "bidderNickname": "스마트폰수집가",
+        "bidTime": "2025-11-10T11:00:00"
+      },
+      {
+        "productBidId": 2,
+        "price": 1900000,
+        "bidderNickname": "애플팬",
+        "bidTime": "2025-11-11T09:20:00"
+      },
+      {
+        "productBidId": 3,
+        "price": 1970000,
+        "bidderNickname": "IT헌터",
+        "bidTime": "2025-11-13T15:45:00"
+      }
+    ]
+  }
+]
