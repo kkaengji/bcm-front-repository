@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { USE_MOCK_API } from "@/lib/constants";
 
 // 토스페이먼츠 SDK 타입 정의
 export interface TossPaymentsWidgets {
@@ -67,8 +68,17 @@ export function useTossPayments(
   } | null>(null);
   const isInitializedRef = useRef(false);
 
+  // Mock 모드: 짧은 딜레이 후 widgetReady=true
+  useEffect(() => {
+    if (!USE_MOCK_API) return;
+    if (!isPageReady || !orderId || !totalAmount) return;
+    const timer = setTimeout(() => setWidgetReady(true), 600);
+    return () => clearTimeout(timer);
+  }, [isPageReady, orderId, totalAmount]);
+
   // 토스페이먼츠 결제위젯 초기화 (한 번만 실행)
   useEffect(() => {
+    if (USE_MOCK_API) return;
     const initializeTossPayments = async () => {
       // 페이지가 준비되지 않았으면 초기화하지 않음
       if (!isPageReady) {
@@ -172,6 +182,16 @@ export function useTossPayments(
     customerName: string;
     customerMobilePhone: string;
   }) => {
+    if (USE_MOCK_API) {
+      const mockPaymentKey = `mock_pk_${Date.now()}`;
+      const url = new URL(options.successUrl);
+      url.searchParams.set("paymentKey", mockPaymentKey);
+      url.searchParams.set("orderId", options.orderId);
+      url.searchParams.set("amount", String(totalAmount));
+      window.location.href = url.toString();
+      return;
+    }
+
     if (!widgetsRef.current) {
       throw new Error("결제 위젯이 준비되지 않았습니다.");
     }

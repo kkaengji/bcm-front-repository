@@ -79,6 +79,13 @@ export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 /**
+ * 포트폴리오/데모 모드에서 실제 API 대신 목데이터를 사용할지 여부
+ * - 환경변수: NEXT_PUBLIC_USE_MOCK_API
+ * - "true"일 때만 활성화
+ */
+export const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
+
+/**
  * 서버에서 빈 결과를 반환할 때 목데이터를 사용할지 여부
  * - 기본값: 개발 환경에서는 사용(true), 프로덕션에서는 사용 안 함(false)
  * - 환경변수로 강제 설정 가능: NEXT_PUBLIC_USE_MOCK_WHEN_EMPTY

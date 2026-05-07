@@ -5,7 +5,8 @@
  * - Refresh Token은 HttpOnly 쿠키로 자동 전송
  */
 
-import { API_BASE_URL } from "@/lib/constants";
+import { API_BASE_URL, USE_MOCK_API } from "@/lib/constants";
+import { mockFetch } from "@/mocks/handlers";
 
 let isRefreshing = false;
 let refreshSubscribers: Array<(token: string | null) => void> = [];
@@ -71,6 +72,14 @@ export async function apiFetch<T = unknown>(
   endpoint: string,
   options: RequestInit = {},
 ): Promise<T> {
+  if (USE_MOCK_API) {
+    return mockFetch<T>(
+      endpoint,
+      options.method ?? "GET",
+      options.body as string | undefined,
+    );
+  }
+
   const url = endpoint.startsWith("http")
     ? endpoint
     : `${API_BASE_URL}${endpoint}`;

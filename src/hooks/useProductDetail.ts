@@ -13,6 +13,7 @@ import {
   WEBSOCKET_CONFIG,
   BID_AMOUNT_LIMITS,
   API_BASE_URL,
+  USE_MOCK_API,
 } from "@/lib/constants";
 import mockData from "@/mocks/products.json";
 import SockJs from "sockjs-client";
@@ -28,6 +29,7 @@ export function useProductDetail({
   userEmail,
 }: UseProductDetailParams) {
   const clientRef = useRef<Client | null>(null);
+  const productRef = useRef<Product | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +55,7 @@ export function useProductDetail({
   // 상품 데이터 설정 및 최소 입찰가 초기화
   const setProductData = useCallback((productData: Product, isMock = false) => {
     setProduct(productData);
-    if (isMock) setIsUsingMockData(true);
+    if (isMock || USE_MOCK_API) setIsUsingMockData(true);
     const minIncrement = getMinBidIncrement(productData.bidPrice);
     setBidAmount((productData.bidPrice + minIncrement).toString());
     setError(null);
@@ -175,6 +177,42 @@ export function useProductDetail({
     };
   }, [productId, product, isUsingMockData]);
 
+  // productRef 동기화 (mock bid 시뮬레이션에서 stale closure 방지)
+  useEffect(() => {
+    productRef.current = product;
+  }, [product]);
+
+  // Mock 입찰 시뮬레이션 (15초 간격 자동 입찰)
+  useEffect(() => {
+    if (!isUsingMockData) return;
+    const BIDDER_NAMES = ["스마트폰수집가", "애플팬", "IT헌터", "테크러버", "경매헌터", "익명입찰자"];
+    const interval = setInterval(() => {
+      const current = productRef.current;
+      if (!current || current.bidStatus !== "BIDDED") return;
+      if (new Date() > new Date(current.bidEndDate)) return;
+      const increment = getMinBidIncrement(current.bidPrice);
+      const newPrice = current.bidPrice + increment;
+      const mockBid = {
+        productBidId: Date.now(),
+        price: newPrice,
+        bidTime: new Date().toISOString(),
+        bidderNickname: BIDDER_NAMES[Math.floor(Math.random() * BIDDER_NAMES.length)],
+      };
+      setProduct((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          bidPrice: newPrice,
+          bidCount: prev.bidCount + 1,
+          productBids: [mockBid, ...(prev.productBids ?? [])],
+        };
+      });
+      setBidAmount((newPrice + getMinBidIncrement(newPrice)).toString());
+      setPriceKey((prev) => prev + 1);
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [isUsingMockData]);
+
   // 경매 마감 여부 확인
   const checkIsAuctionExpired = useCallback(() => {
     if (!product) return false;
@@ -236,16 +274,37 @@ export function useProductDetail({
 
     setBidError(null);
 
-    clientRef.current?.publish({
-      destination: `/publish/products/${productId}/product-bids`,
-      body: JSON.stringify({
+    if (isUsingMockData) {
+      const mockBid = {
+        productBidId: Date.now(),
         price: bidValue,
-        email: userEmail,
-      }),
-    });
+        bidTime: new Date().toISOString(),
+        bidderNickname: "나",
+      };
+      setProduct((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          bidPrice: bidValue,
+          bidCount: prev.bidCount + 1,
+          bidStatus: "BIDDED" as const,
+          productBids: [mockBid, ...(prev.productBids ?? [])],
+        };
+      });
+      setBidAmount((bidValue + getMinBidIncrement(bidValue)).toString());
+      setPriceKey((prev) => prev + 1);
+    } else {
+      clientRef.current?.publish({
+        destination: `/publish/products/${productId}/product-bids`,
+        body: JSON.stringify({
+          price: bidValue,
+          email: userEmail,
+        }),
+      });
+    }
 
     setShowBidForm(false);
-  }, [bidAmount, product, productId, userEmail]);
+  }, [bidAmount, product, productId, userEmail, isUsingMockData]);
 
   // 최소 입찰가 계산
   const minBidIncrement = product ? getMinBidIncrement(product.bidPrice) : 0;

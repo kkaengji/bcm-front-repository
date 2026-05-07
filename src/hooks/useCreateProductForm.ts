@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { apiPost } from "@/lib/api";
+import { USE_MOCK_API } from "@/lib/constants";
 
 import { useAuth } from "@/hooks/user/useAuth";
 import { useCategories } from "@/hooks/useCategories";
@@ -212,21 +213,32 @@ export function useCreateProductForm() {
     setError(null);
 
     try {
-      // S3에 이미지 업로드 - 모든 파일 이름을 배열로 요청
-      const fileNames = imageFiles.map((file) => file.name);
-      const uploadUrls = await apiPost<string[]>("/api/s3/upload-url", {
-        uploadUrls: fileNames,
-      });
+      let thumbnail: string;
+      let imageUrls: string[];
 
-      // 각 파일을 presigned URL로 업로드
-      for (let i = 0; i < imageFiles.length; i++) {
-        await fetch(uploadUrls[i], {
-          method: "PUT",
-          headers: {
-            "Content-Type": imageFiles[i].type,
-          },
-          body: imageFiles[i],
+      if (USE_MOCK_API) {
+        // Mock 모드: S3 업로드 건너뛰고 플레이스홀더 사용 (핸들러에서 덮어씀)
+        thumbnail = "/product01.jpeg";
+        imageUrls = imageFiles.map(() => "/product01.jpeg");
+      } else {
+        // S3에 이미지 업로드 - 모든 파일 이름을 배열로 요청
+        const fileNames = imageFiles.map((file) => file.name);
+        const uploadedUrls = await apiPost<string[]>("/api/s3/upload-url", {
+          uploadUrls: fileNames,
         });
+
+        for (let i = 0; i < imageFiles.length; i++) {
+          await fetch(uploadedUrls[i], {
+            method: "PUT",
+            headers: { "Content-Type": imageFiles[i].type },
+            body: imageFiles[i],
+          });
+        }
+
+        const mainImage = imageFiles[mainImageIndex];
+        const otherImages = imageFiles.filter((_, idx) => idx !== mainImageIndex);
+        imageUrls = [mainImage, ...otherImages].map((file) => file.name);
+        thumbnail = mainImage.name;
       }
 
       // 종료 날짜를 현재 시간 이후의 랜덤한 시간으로 설정
@@ -260,12 +272,6 @@ export function useCreateProductForm() {
 
         bidEndDateString = `${formData.bidEndDate}T${hours}:${minutes}:${seconds}`;
       }
-
-      // 메인 이미지를 첫 번째로, 나머지 이미지들을 배열로 구성
-      const mainImage = imageFiles[mainImageIndex];
-      const otherImages = imageFiles.filter((_, idx) => idx !== mainImageIndex);
-      const imageUrls = [mainImage, ...otherImages].map((file) => file.name);
-      const thumbnail = mainImage.name;
 
       const productData = {
         name: formData.name,
