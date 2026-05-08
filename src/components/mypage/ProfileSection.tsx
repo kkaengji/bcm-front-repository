@@ -237,7 +237,7 @@ export default function ProfileSection({
           </div>
         </div>
 
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen} modal={!showAddressSearch}>
           <DialogTrigger asChild>
             <Button
               variant="outline"
