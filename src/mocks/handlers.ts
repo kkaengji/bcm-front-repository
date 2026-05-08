@@ -1,16 +1,37 @@
-import type { Product, ProductListResponse, CategoryListResponse } from "@/types";
+import type { Product, ProductListResponse, CategoryListResponse, ProductQuestion, ProductAnswer } from "@/types";
 import {
   MOCK_PRODUCTS,
   MOCK_CATEGORIES,
   MOCK_ME,
   MOCK_ORDERS,
   MOCK_DEMO_SELLER,
+  MOCK_QUESTIONS,
+  DEMO_SELLING_1,
+  DEMO_SELLING_2,
 } from "./data";
+
+const _demoProducts: Product[] = [DEMO_SELLING_1, DEMO_SELLING_2];
 
 // 세션 중에만 유지되는 임시 상태
 const _sessionProducts: Product[] = [];
 let _nextProductId = 100;
-let _mockMeOverrides: { nickname?: string; phoneNumber?: string } = {};
+let _mockMeOverrides: {
+  nickname?: string;
+  phoneNumber?: string;
+  profileImageUrl?: string;
+  address?: string;
+  detailAddress?: string;
+  zipCode?: string;
+  rating?: number;
+  reviews?: number;
+} = {};
+
+const _sessionQuestions = new Map<number, ProductQuestion[]>();
+let _nextQuestionId = 1000;
+let _nextAnswerId = 1000;
+
+const _deliveredProductIds = new Set<number>();
+const _reviewedOrders = new Set<string>(); // key: `${productId}-${reviewType}`
 
 const _mockUsers: Array<{ email: string; nickname: string }> = [
   { email: "demo@example.com", nickname: "데모유저" },
@@ -113,6 +134,27 @@ function handleReissue(): { accessToken: string } {
 
 // ── Products ──────────────────────────────────────────────────────────────────
 
+function _isEnded(p: Product): boolean {
+  return (
+    p.bidStatus === "COMPLETED" ||
+    p.bidStatus === "PAYMENT_WAITING" ||
+    new Date(p.bidEndDate) < new Date()
+  );
+}
+
+function _compareBy(field: string, dir: string) {
+  return (a: Product, b: Product): number => {
+    let av: number | string;
+    let bv: number | string;
+    if (field === "bidEndDate") { av = a.bidEndDate; bv = b.bidEndDate; }
+    else if (field === "bidPrice") { av = a.bidPrice; bv = b.bidPrice; }
+    else if (field === "bidCount") { av = a.bidCount; bv = b.bidCount; }
+    else { av = a.createdAt; bv = b.createdAt; }
+    if (dir === "desc") return av > bv ? -1 : av < bv ? 1 : 0;
+    return av > bv ? 1 : av < bv ? -1 : 0;
+  };
+}
+
 function handleGetProducts(endpoint: string): ProductListResponse {
   const url = _parseUrl(endpoint);
   const page = parseInt(url.searchParams.get("page") ?? "0");
@@ -121,28 +163,24 @@ function handleGetProducts(endpoint: string): ProductListResponse {
   const bidStatusParam = url.searchParams.get("bidStatus");
   const nameQuery = url.searchParams.get("name");
 
-  let filtered = [...MOCK_PRODUCTS, ..._sessionProducts];
+  let base = [...MOCK_PRODUCTS, ..._sessionProducts];
 
   if (bidStatusParam) {
     const statuses = bidStatusParam.split(",");
-    filtered = filtered.filter((p) => statuses.includes(p.bidStatus));
+    base = base.filter((p) => statuses.includes(p.bidStatus));
   }
 
   if (nameQuery) {
     const q = nameQuery.toLowerCase();
-    filtered = filtered.filter((p) => p.name.toLowerCase().includes(q));
+    base = base.filter((p) => p.name.toLowerCase().includes(q));
   }
 
   const [sortField, sortDir] = sort.split(",");
-  filtered.sort((a, b) => {
-    let av: number | string = a.createdAt;
-    let bv: number | string = b.createdAt;
-    if (sortField === "bidEndDate") { av = a.bidEndDate; bv = b.bidEndDate; }
-    else if (sortField === "bidPrice") { av = a.bidPrice; bv = b.bidPrice; }
-    else if (sortField === "bidCount") { av = a.bidCount; bv = b.bidCount; }
-    if (sortDir === "desc") return av > bv ? -1 : av < bv ? 1 : 0;
-    return av > bv ? 1 : av < bv ? -1 : 0;
-  });
+  const cmp = _compareBy(sortField, sortDir);
+
+  const active = base.filter((p) => !_isEnded(p)).sort(cmp);
+  const ended = base.filter((p) => _isEnded(p)).sort(cmp);
+  const filtered = [...active, ...ended];
 
   const total = filtered.length;
   const start = page * size;
@@ -173,6 +211,8 @@ function handleGetProducts(endpoint: string): ProductListResponse {
 function handleGetProductDetail(id: number): Product {
   const session = _sessionProducts.find((p) => p.id === id);
   if (session) return session;
+  const demoProduct = _demoProducts.find((p) => p.id === id);
+  if (demoProduct) return demoProduct;
   const found = MOCK_PRODUCTS.find((p) => p.id === id);
   if (found) return found;
   // 알 수 없는 ID는 첫 번째 상품으로 대체
@@ -197,6 +237,11 @@ function handleCreateProduct(body: unknown): { id: number } {
   const price = data.price ?? 0;
   const id = _nextProductId++;
 
+  const FALLBACK_IMAGE = "/products/1/image-1.jpeg";
+  const thumbnailUrl = data.thumbnail || FALLBACK_IMAGE;
+  const imageUrlList: string[] =
+    data.imageUrls && data.imageUrls.length > 0 ? data.imageUrls : [thumbnailUrl];
+
   const newProduct: Product = {
     id,
     name: data.name ?? "새 상품",
@@ -207,8 +252,8 @@ function handleCreateProduct(body: unknown): { id: number } {
     bidCount: 0,
     bidStatus: "NOT_BIDDED",
     productStatus: data.productStatus ?? "GOOD",
-    thumbnail: "/product01.jpeg",
-    imageUrls: [{ id: id * 100, imageUrl: "/product01.jpeg" }],
+    thumbnail: thumbnailUrl,
+    imageUrls: imageUrlList.map((url, i) => ({ id: id * 100 + i, imageUrl: url })),
     user: { ...MOCK_DEMO_SELLER, nickname: _getCurrentNickname() },
     createdAt: new Date().toISOString(),
     bidEndDate,
@@ -245,16 +290,114 @@ function handleGetCategories(): CategoryListResponse {
 
 // ── Users ─────────────────────────────────────────────────────────────────────
 
-function handleGetMe(): typeof MOCK_ME {
+function handleGetMe() {
   const nickname = _mockMeOverrides.nickname ?? _getCurrentNickname();
   const phoneNumber = _mockMeOverrides.phoneNumber ?? MOCK_ME.phoneNumber;
-  return { ...MOCK_ME, nickname, phoneNumber };
+  return {
+    ...MOCK_ME,
+    nickname,
+    phoneNumber,
+    profileImageUrl: _mockMeOverrides.profileImageUrl,
+    address: _mockMeOverrides.address ?? MOCK_ME.address,
+    detailAddress: _mockMeOverrides.detailAddress ?? MOCK_ME.detailAddress,
+    zipCode: _mockMeOverrides.zipCode ?? MOCK_ME.zipCode,
+    rating: _mockMeOverrides.rating ?? MOCK_ME.rating,
+    reviews: _mockMeOverrides.reviews ?? MOCK_ME.reviews,
+  };
 }
 
 function handleUpdateMe(body: unknown): Record<string, never> {
-  const data = body as { nickname?: string; phoneNumber?: string };
+  const data = body as {
+    nickname?: string;
+    phoneNumber?: string;
+    profileImageUrl?: string;
+    address?: string;
+    detailAddress?: string;
+    zipCode?: string;
+  };
   if (data.nickname) _mockMeOverrides.nickname = data.nickname;
   if (data.phoneNumber) _mockMeOverrides.phoneNumber = data.phoneNumber;
+  if (data.profileImageUrl !== undefined) _mockMeOverrides.profileImageUrl = data.profileImageUrl;
+  if (data.address !== undefined) _mockMeOverrides.address = data.address;
+  if (data.detailAddress !== undefined) _mockMeOverrides.detailAddress = data.detailAddress;
+  if (data.zipCode !== undefined) _mockMeOverrides.zipCode = data.zipCode;
+  return {};
+}
+
+function handleDeliverProduct(productId: number): Record<string, never> {
+  _deliveredProductIds.add(productId);
+  return {};
+}
+
+function handleSubmitReview(body: unknown): Record<string, never> {
+  const data = body as { productId?: number; rating?: number; reviewType?: string };
+  if (data.productId && data.reviewType) {
+    _reviewedOrders.add(`${data.productId}-${data.reviewType}`);
+  }
+  if (data.rating !== undefined) {
+    const currentRating = _mockMeOverrides.rating ?? MOCK_ME.rating;
+    const currentReviews = _mockMeOverrides.reviews ?? MOCK_ME.reviews;
+    const newReviews = currentReviews + 1;
+    const newRating = Math.round(((currentRating * currentReviews + data.rating) / newReviews) * 10) / 10;
+    _mockMeOverrides.rating = newRating;
+    _mockMeOverrides.reviews = newReviews;
+  }
+  return {};
+}
+
+function handleCheckReview(productId: number, reviewType: string): { reviewed: boolean } {
+  return { reviewed: _reviewedOrders.has(`${productId}-${reviewType}`) };
+}
+
+function handleGetDeliveredIds(): { deliveredProductIds: number[] } {
+  return { deliveredProductIds: Array.from(_deliveredProductIds) };
+}
+
+// ── Q&A ───────────────────────────────────────────────────────────────────────
+
+function handleGetProductQuestions(productId: number): ProductQuestion[] {
+  const session = _sessionQuestions.get(productId) ?? [];
+  const mock = MOCK_QUESTIONS[productId] ?? [];
+  return [...mock, ...session];
+}
+
+function handlePostQuestion(productId: number, body: unknown): { questionId: number } {
+  const { content } = (body as { content?: string }) ?? {};
+  const questionId = _nextQuestionId++;
+  const question: ProductQuestion = {
+    questionId,
+    askerNickname: _getCurrentNickname(),
+    content: content ?? "",
+    createdAt: new Date().toISOString(),
+    answer: null,
+  };
+  const existing = _sessionQuestions.get(productId) ?? [];
+  _sessionQuestions.set(productId, [...existing, question]);
+  return { questionId };
+}
+
+function handlePostAnswer(productId: number, questionId: number, body: unknown): Record<string, never> {
+  const { content } = (body as { content?: string }) ?? {};
+  const answer: ProductAnswer = {
+    answerId: _nextAnswerId++,
+    responderNickname: _getCurrentNickname(),
+    content: content ?? "",
+    createdAt: new Date().toISOString(),
+  };
+
+  const sessionQs = _sessionQuestions.get(productId) ?? [];
+  const sessionQ = sessionQs.find((q) => q.questionId === questionId);
+  if (sessionQ) {
+    sessionQ.answer = answer;
+    return {};
+  }
+
+  const mockQs = MOCK_QUESTIONS[productId];
+  if (mockQs) {
+    const mockQ = mockQs.find((q) => q.questionId === questionId);
+    if (mockQ) mockQ.answer = answer;
+  }
+
   return {};
 }
 
@@ -286,6 +429,16 @@ export async function mockFetch<T>(
   // Products — 카테고리 먼저 (경로 포함 관계 주의)
   if (path.includes("/api/products/categories")) return handleGetCategories() as T;
 
+  // Q&A — products 상세 매칭보다 먼저 처리
+  const questionAnswerMatch = path.match(/^\/api\/products\/(\d+)\/questions\/(\d+)\/answers$/);
+  if (questionAnswerMatch) return handlePostAnswer(parseInt(questionAnswerMatch[1]), parseInt(questionAnswerMatch[2]), body) as T;
+
+  const questionsMatch = path.match(/^\/api\/products\/(\d+)\/questions$/);
+  if (questionsMatch) {
+    if (method.toUpperCase() === "POST") return handlePostQuestion(parseInt(questionsMatch[1]), body) as T;
+    return handleGetProductQuestions(parseInt(questionsMatch[1])) as T;
+  }
+
   const productDetailMatch = path.match(/^\/api\/products\/(\d+)$/);
   if (productDetailMatch) return handleGetProductDetail(parseInt(productDetailMatch[1])) as T;
 
@@ -305,12 +458,25 @@ export async function mockFetch<T>(
     return handleGetMe() as T;
   }
 
+  // Products — 배송완료
+  const deliverMatch = path.match(/^\/api\/products\/(\d+)\/delivered$/);
+  if (deliverMatch) return handleDeliverProduct(parseInt(deliverMatch[1])) as T;
+
   // Orders — shipping-info 먼저
   const shippingMatch = path.match(/^\/api\/orders\/(\d+)\/shipping-info$/);
   if (shippingMatch) return {} as T;
 
   const orderMatch = path.match(/^\/api\/orders\/(\d+)$/);
   if (orderMatch) return handleGetOrder(parseInt(orderMatch[1])) as T;
+
+  // Reviews
+  if (path === "/api/reviews") return handleSubmitReview(body) as T;
+  const reviewCheckMatch = path.match(/^\/api\/reviews\/check\/(\d+)$/);
+  if (reviewCheckMatch) {
+    const reviewType = url.searchParams.get("type") ?? "";
+    return handleCheckReview(parseInt(reviewCheckMatch[1]), reviewType) as T;
+  }
+  if (path === "/api/reviews/delivered-ids") return handleGetDeliveredIds() as T;
 
   // S3
   if (path.includes("/api/s3/upload-url")) {

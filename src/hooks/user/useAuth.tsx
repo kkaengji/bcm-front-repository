@@ -13,6 +13,27 @@ import { User, AuthContextType, JWTPayload } from "@/types";
 import { setAccessToken as setGlobalAccessToken, apiPost } from "@/lib/api";
 import { decodeJWT } from "@/lib/utils";
 
+function createGuestToken(): string {
+  if (typeof window === "undefined") return "mock.mock.mock";
+  const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
+  const payloadStr = JSON.stringify({
+    sub: "demo@example.com",
+    nickname: "데모유저",
+    role: "ROLE_USER",
+    type: "ACCESS",
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 86400 * 30,
+  });
+  const payload = btoa(unescape(encodeURIComponent(payloadStr)))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
+  return `${header}.${payload}.mocksignature`;
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -20,11 +41,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 로그인 함수: 로컬 스토리지 저장 로직 보장
   const login = useCallback((token: string, userData: User) => {
     localStorage.setItem("accessToken", token);
     setGlobalAccessToken(token);
     setUser(userData);
+  }, []);
+
+  const loginAsGuest = useCallback(() => {
+    const token = createGuestToken();
+    const guestUser: User = {
+      id: 0,
+      email: "demo@example.com",
+      nickname: "데모유저",
+      role: "USER",
+      phoneNumber: "",
+    };
+    localStorage.setItem("accessToken", token);
+    setGlobalAccessToken(token);
+    setUser(guestUser);
   }, []);
 
   // 로그아웃 함수: 로컬 스토리지 삭제
@@ -111,6 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         accessToken: null,
         login,
+        loginAsGuest,
         logout,
         isLoading,
         updateNickname,

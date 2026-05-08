@@ -25,7 +25,7 @@ export function ProductImageGallery({
   onSelectIndex,
 }: ProductImageGalleryProps) {
   return (
-    <div className="bg-muted border-border relative flex aspect-square items-center justify-center overflow-hidden rounded-xl border shadow-sm">
+    <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-card shadow-2xl shadow-black/30 ring-1 ring-white/8">
       <Image
         src={images[currentIndex]?.imageUrl || "/placeholder.svg"}
         alt={productName}
@@ -40,14 +40,14 @@ export function ProductImageGallery({
           <button
             aria-label="이전 이미지"
             onClick={onPrevious}
-            className="focus:ring-primary absolute top-1/2 left-3 inline-flex -translate-y-1/2 items-center justify-center rounded-full bg-white/70 p-2 text-black shadow-md backdrop-blur-sm transition hover:bg-white focus:ring-2 focus:outline-none"
+            className="absolute top-1/2 left-3 inline-flex -translate-y-1/2 items-center justify-center rounded-full bg-black/40 p-2 text-white shadow-lg backdrop-blur-md transition hover:bg-black/60 focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
           <button
             aria-label="다음 이미지"
             onClick={onNext}
-            className="focus:ring-primary absolute top-1/2 right-3 inline-flex -translate-y-1/2 items-center justify-center rounded-full bg-white/70 p-2 text-black shadow-md backdrop-blur-sm transition hover:bg-white focus:ring-2 focus:outline-none"
+            className="absolute top-1/2 right-3 inline-flex -translate-y-1/2 items-center justify-center rounded-full bg-black/40 p-2 text-white shadow-lg backdrop-blur-md transition hover:bg-black/60 focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <ChevronRight className="h-5 w-5" />
           </button>

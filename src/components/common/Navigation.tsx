@@ -19,7 +19,7 @@ export default function Navigation() {
 
   return (
     <>
-      <nav className="border-border bg-background sticky top-0 z-50 border-b">
+      <nav className="sticky top-0 z-50 border-b border-white/8 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-3 sm:gap-4 sm:px-6 lg:px-8">
           {/* 로고 */}
           <Link
@@ -33,7 +33,7 @@ export default function Navigation() {
               height={28}
               className="sm:h-8 sm:w-8"
             />
-            <span className="font-logo text-lg sm:text-xl">ㅂㅊㅁ</span>
+            <span className="text-lg font-black tracking-tight text-primary sm:text-xl">ㅂㅊㅁ</span>
           </Link>
 
           {/* 중앙 공간 */}
@@ -54,7 +54,7 @@ export default function Navigation() {
                   )}
                   <Link
                     href="/mypage"
-                    className="text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 rounded-full p-2 transition-colors"
+                    className="text-muted-foreground hover:text-foreground hover:bg-accent shrink-0 rounded-lg p-2 transition-all duration-150"
                     title="마이페이지"
                   >
                     <svg
@@ -73,7 +73,7 @@ export default function Navigation() {
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 rounded-full p-2 transition-colors"
+                    className="text-muted-foreground hover:text-foreground hover:bg-accent shrink-0 rounded-lg p-2 transition-all duration-150"
                     title="로그아웃"
                   >
                     <LogOut className="h-5 w-5" />
@@ -87,7 +87,7 @@ export default function Navigation() {
                   )}
                   <Link
                     href="/login"
-                    className="text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 rounded-full p-2 transition-colors"
+                    className="text-muted-foreground hover:text-foreground hover:bg-accent shrink-0 rounded-lg p-2 transition-all duration-150"
                     title="로그인"
                   >
                     <User className="h-5 w-5" />

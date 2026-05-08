@@ -21,20 +21,24 @@ function HomeContent() {
     return Number.isNaN(n) ? 0 : Math.max(n, 0);
   }, [searchParams]);
 
-  // 모바일 여부 감지
+  // 모바일 여부 및 페이지 크기 감지
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
+  const [desktopPageSize, setDesktopPageSize] = useState<number>(8);
 
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+    const checkSize = () => {
+      const w = window.innerWidth;
+      setIsMobile(w < 768);
+      // xl(≥1280): 4열 → 8개, lg(≥1024): 3열 → 6개
+      setDesktopPageSize(w >= 1280 ? 8 : 6);
     };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
+    checkSize();
+    window.addEventListener("resize", checkSize);
+    return () => window.removeEventListener("resize", checkSize);
   }, []);
 
   // 데스크톱: 페이지네이션
-  const paginatedData = useProducts(searchQuery, 6, pageParam);
+  const paginatedData = useProducts(searchQuery, desktopPageSize, pageParam);
 
   // 모바일: 무한 스크롤
   const infiniteData = useInfiniteProducts(searchQuery, 6);

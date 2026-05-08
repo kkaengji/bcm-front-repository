@@ -29,28 +29,26 @@ export function ProductListItem({
   actionNode,
 }: ProductListItemProps) {
   return (
-    <div className="hover:bg-muted/50 border-border flex items-center justify-between border-b p-4 transition-colors last:border-b-0">
+    <div className="flex items-center justify-between rounded-xl border border-white/8 bg-card/50 p-3 transition-colors hover:bg-card">
       <Link
         href={`${linkPrefix}/${id}`}
-        className="flex flex-1 items-center gap-4 pr-4"
+        className="flex flex-1 items-center gap-3 pr-3"
       >
         {/* 상품 이미지 */}
-        {image && (
+        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-muted">
           <img
-            src={image}
+            src={image || "/placeholder.svg"}
             alt={name}
-            className="h-12 w-12 shrink-0 rounded-lg object-cover"
+            className="h-full w-full object-cover"
           />
-        )}
+        </div>
+
         {/* 상품 정보 */}
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <p className="text-foreground font-medium">{name}</p>
+            <p className="text-foreground truncate font-semibold text-sm">{name}</p>
             {badgeText && (
-              <Badge
-                variant="secondary"
-                className="h-5 px-1.5 py-0 text-[10px]"
-              >
+              <Badge variant="secondary" className="h-5 shrink-0 px-1.5 py-0 text-[10px]">
                 {badgeText}
               </Badge>
             )}
@@ -61,20 +59,17 @@ export function ProductListItem({
                 {getProductStatusLabel(status.toUpperCase(), PRODUCT_STATUS)}
               </span>
             )}
-            {status && subText && <span>•</span>}
+            {status && subText && <span>·</span>}
             {subText && <span>{subText}</span>}
           </div>
-        </div>
-
-        {/* 가격 정보 */}
-        <div className="shrink-0 text-right">
-          <p className="text-foreground font-bold">{formatCurrency(price)}</p>
+          <p className="font-price text-foreground mt-1 font-bold text-sm">
+            {formatCurrency(price)}
+          </p>
         </div>
       </Link>
 
-      {/* 액션 버튼이 있을 경우 렌더링 */}
       {actionNode && (
-        <div className="border-border ml-4 border-l pl-4">{actionNode}</div>
+        <div className="shrink-0 border-l border-white/8 pl-3">{actionNode}</div>
       )}
     </div>
   );

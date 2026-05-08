@@ -6,32 +6,15 @@ import { apiGet } from "@/lib/api";
 import { USE_MOCK_WHEN_EMPTY } from "@/lib/constants";
 import mockData from "@/mocks/products.json";
 
-type SortOption =
-  | "latest"
-  | "price-high"
-  | "price-low"
-  | "bid-count"
-  | "ending-soon"
-  | "ended";
+type SortOption = "latest" | "price-high" | "price-low" | "bid-count" | "ending-soon";
 
-// 정렬 옵션을 서버 정렬 쿼리로 매핑
-// Record 타입 사용으로 모든 SortOption에 대한 매핑을 강제하여 타입 안정성 확보
 const SORT_MAP: Record<SortOption, string> = {
   latest: "createdAt,desc",
   "ending-soon": "bidEndDate,asc",
   "price-high": "bidPrice,desc",
   "price-low": "bidPrice,asc",
   "bid-count": "bidCount,desc",
-  ended: "bidEndDate,desc",
 };
-
-const ENDED_STATUSES: Product["bidStatus"][] = [
-  "COMPLETED",
-  "NO_BIDDER",
-  "PAYMENT_WAITING",
-];
-
-const ACTIVE_STATUSES: Product["bidStatus"][] = ["NOT_BIDDED", "BIDDED"];
 
 export function useProducts(
   searchQuery: string = "",
@@ -69,11 +52,7 @@ export function useProducts(
     // Mock 데이터 폴백 로직
     const applyMockDataFallback = (pageNum: number) => {
       const all = (mockData as Product[]) ?? [];
-      const filteredAll = all.filter((product) =>
-        sortBy === "ended"
-          ? ENDED_STATUSES.includes(product.bidStatus)
-          : ACTIVE_STATUSES.includes(product.bidStatus),
-      );
+      const filteredAll = all;
       const startIdx = pageNum * pageSize;
       const endIdx = startIdx + pageSize;
       const pageSlice = filteredAll.slice(startIdx, endIdx);
@@ -92,13 +71,6 @@ export function useProducts(
         params.set("page", String(currentPage));
         params.set("size", String(pageSize));
         params.set("sort", SORT_MAP[sortBy]);
-
-        // 종료된 상품 필터
-        if (sortBy === "ended") {
-          params.set("bidStatus", ENDED_STATUSES.join(","));
-        } else {
-          params.set("bidStatus", ACTIVE_STATUSES.join(","));
-        }
 
         const data = await apiGet<ProductListResponse>(
           `/api/products?${params.toString()}`,

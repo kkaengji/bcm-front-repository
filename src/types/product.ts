@@ -31,6 +31,8 @@ export interface Product {
     email: string;
     role: "USER" | "ADMIN";
     phoneNumber: string;
+    temperature?: number;
+    location?: string;
   };
   createdAt: string;
   bidEndDate: string;
@@ -105,4 +107,20 @@ export interface Bid {
   bidder: string;
   amount: number;
   time: string;
+}
+
+// Q&A
+export interface ProductAnswer {
+  answerId: number;
+  responderNickname: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface ProductQuestion {
+  questionId: number;
+  askerNickname: string;
+  content: string;
+  createdAt: string;
+  answer: ProductAnswer | null;
 }

@@ -50,6 +50,7 @@ export interface AuthContextType {
   accessToken: string | null;
   isLoading: boolean;
   login: (token: string, userData: User) => void;
+  loginAsGuest: () => void;
   logout: () => void;
   updateNickname: (nickname: string) => void;
 }

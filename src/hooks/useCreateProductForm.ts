@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { apiPost } from "@/lib/api";
 import { USE_MOCK_API } from "@/lib/constants";
+import { toast } from "sonner";
 
 import { useAuth } from "@/hooks/user/useAuth";
 import { useCategories } from "@/hooks/useCategories";
@@ -59,7 +60,7 @@ export function useCreateProductForm() {
 
   useEffect(() => {
     if (!isAuthLoading && user === null) {
-      alert("로그인이 필요한 페이지입니다.");
+      toast.error("로그인이 필요한 페이지입니다.");
       router.push("/login");
     }
   }, [user, isAuthLoading, router]);
@@ -116,7 +117,7 @@ export function useCreateProductForm() {
 
       const available = MAX_IMAGES - imageFiles.length;
       if (available <= 0) {
-        alert(`사진은 최대 ${MAX_IMAGES}장까지 업로드할 수 있습니다.`);
+        toast.warning(`사진은 최대 ${MAX_IMAGES}장까지 업로드할 수 있습니다.`);
         e.target.value = "";
         return;
       }
@@ -131,9 +132,7 @@ export function useCreateProductForm() {
         const isValidExt = allowedExtensions.includes(ext.toLowerCase());
 
         if (!isValidType && !isValidExt) {
-          alert(
-            "PNG, JPG, JPEG, GIF, WEBP 형식의 이미지만 업로드할 수 있습니다.",
-          );
+          toast.warning("PNG, JPG, JPEG, GIF, WEBP 형식의 이미지만 업로드할 수 있습니다.");
           return;
         }
 
@@ -183,19 +182,19 @@ export function useCreateProductForm() {
 
   const handleSubmit = async () => {
     if (imageFiles.length === 0) {
-      alert("이미지를 1개 이상 등록해야 합니다.");
+      toast.warning("이미지를 1개 이상 등록해야 합니다.");
       setStep(1);
       return;
     }
 
     if (!formData.name || formData.name.trim() === "") {
-      alert("상품명을 입력해주세요.");
+      toast.warning("상품명을 입력해주세요.");
       setStep(2);
       return;
     }
 
     if (!formData.bidEndDate || formData.bidEndDate.trim() === "") {
-      alert("경매 종료 날짜를 입력해주세요.");
+      toast.warning("경매 종료 날짜를 입력해주세요.");
       setStep(3);
       return;
     }
@@ -204,7 +203,7 @@ export function useCreateProductForm() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (endDate < today) {
-      alert("경매 종료 날짜는 오늘 이후여야 합니다.");
+      toast.warning("경매 종료 날짜는 오늘 이후여야 합니다.");
       setStep(4);
       return;
     }
@@ -217,9 +216,19 @@ export function useCreateProductForm() {
       let imageUrls: string[];
 
       if (USE_MOCK_API) {
-        // Mock 모드: S3 업로드 건너뛰고 플레이스홀더 사용 (핸들러에서 덮어씀)
-        thumbnail = "/product01.jpeg";
-        imageUrls = imageFiles.map(() => "/product01.jpeg");
+        // Mock 모드: 파일을 Data URL로 변환해 실제 이미지가 표시되도록 함
+        const toDataUrl = (file: File): Promise<string> =>
+          new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target?.result as string);
+            reader.readAsDataURL(file);
+          });
+        const orderedFiles = [
+          imageFiles[mainImageIndex],
+          ...imageFiles.filter((_, i) => i !== mainImageIndex),
+        ];
+        imageUrls = await Promise.all(orderedFiles.map(toDataUrl));
+        thumbnail = imageUrls[0];
       } else {
         // S3에 이미지 업로드 - 모든 파일 이름을 배열로 요청
         const fileNames = imageFiles.map((file) => file.name);
@@ -290,11 +299,11 @@ export function useCreateProductForm() {
         productData,
       );
 
-      alert("상품이 성공적으로 등록됐습니다.");
+      toast.success("상품이 성공적으로 등록됐습니다.");
       router.push(`/products/${result.id}`);
     } catch (err) {
       console.error("상품 등록 실패:", err);
-      alert("상품 등록에 실패했습니다. 다시 시도해주세요.");
+      toast.error("상품 등록에 실패했습니다. 다시 시도해주세요.");
       setError(null);
     } finally {
       setIsLoading(false);

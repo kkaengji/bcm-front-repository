@@ -10,6 +10,7 @@ import { apiGet, apiPost } from "@/lib/api";
 import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/hooks/user/useAuth";
 import type { OrderDetail } from "@/types";
+import { toast } from "sonner";
 
 function SuccessContent() {
   const router = useRouter();
@@ -30,14 +31,14 @@ function SuccessContent() {
 
       // 로그인하지 않은 경우 로그인 페이지로 리다이렉트
       if (!user) {
-        alert("로그인이 필요한 서비스입니다.");
+        toast.error("로그인이 필요한 서비스입니다.");
         router.push("/login");
         return;
       }
 
       // paymentKey가 없으면 직접 URL 접근으로 간주
       if (!paymentKey) {
-        alert("잘못된 접근입니다.");
+        toast.error("잘못된 접근입니다.");
         router.push("/");
         return;
       }
@@ -66,7 +67,7 @@ function SuccessContent() {
             error.message.includes("권한") ||
             error.message.includes("엔티티를 찾을 수 없습니다"))
         ) {
-          alert("접근 권한이 없거나 존재하지 않는 주문입니다.");
+          toast.error("접근 권한이 없거나 존재하지 않는 주문입니다.");
           router.push("/");
           return;
         }

@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { TIME_CONSTANTS } from "@/lib/constants";
+import { TIME_CONSTANTS, TEMPERATURE_GRADES } from "@/lib/constants";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -75,9 +75,8 @@ export function getTimeRemainingText(bidEndDate: string | Date): string | null {
 export function formatKoreanTime(dateString: string | Date): string {
   try {
     const date = new Date(dateString);
-    // UTC 시간을 한국 시간(UTC+9)으로 변환
-    const koreaTime = new Date(date.getTime() + 9 * 60 * 60 * 1000);
-    return koreaTime.toLocaleString("ko-KR", {
+    return date.toLocaleString("ko-KR", {
+      timeZone: "Asia/Seoul",
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -193,12 +192,49 @@ export function getBidStatusLabel(
 }
 
 /**
+ * 블라인드 타이머: 경매 마감 24시간 이내면 시간 대신 "마감 임박"만 표시.
+ * "블라인드 치킨" 콘셉트의 핵심 — 정보 불균형으로 긴장감 극대화.
+ */
+export const BLIND_THRESHOLD_MS = 24 * 60 * 60 * 1000;
+
+export function getBlindTimeText(bidEndDate: string | Date): string | null {
+  const diffMs = getTimeRemainMs(bidEndDate);
+  if (diffMs <= 0) return null;
+  if (diffMs <= BLIND_THRESHOLD_MS) return "마감 임박";
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays >= 1) return `${diffDays}일 남음`;
+  return `${diffHours}시간 남음`;
+}
+
+/**
  * Category 객체에서 이름을 추출합니다.
  * @param category - Category 객체
  * @returns 카테고리 이름
  */
 export function getCategoryNameString(category: { name: string }): string {
   return category.name;
+}
+
+/**
+ * 별점과 리뷰 수를 기반으로 사용자 온도를 계산합니다.
+ * 기준: 36.5°C, rating 3.0 = 36.5°C, 최댓값 99.9, 최솟값 0
+ */
+export function calcTemperature(rating: number, reviews: number): number {
+  if (reviews === 0) return 36.5;
+  const raw = 36.5 + (rating - 3.0) * 6;
+  return Math.round(Math.max(0, Math.min(99.9, raw)) * 10) / 10;
+}
+
+/**
+ * 온도에 해당하는 닭 테마 등급을 반환합니다.
+ */
+export function getTemperatureGrade(temp: number): { label: string; emoji: string; color: string; minTemp: number } {
+  let grade: { label: string; emoji: string; color: string; minTemp: number } = TEMPERATURE_GRADES[0];
+  for (const g of TEMPERATURE_GRADES) {
+    if (temp >= g.minTemp) grade = g;
+  }
+  return grade;
 }
 
 export function decodeJWT<T = Record<string, unknown>>(

@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { apiPut } from "@/lib/api";
-import { formatJoinDate } from "@/lib/utils";
+import { apiPost, apiPut } from "@/lib/api";
+import { formatJoinDate, calcTemperature } from "@/lib/utils";
+import { USE_MOCK_API } from "@/lib/constants";
 import type { MeResponse } from "./useMe";
 
 // --- 타입 정의 ---
@@ -10,6 +11,11 @@ export type UserProfile = {
   rating: number;
   reviews: number;
   phoneNumber: string;
+  profileImageUrl?: string;
+  address?: string;
+  detailAddress?: string;
+  zipCode?: string;
+  temperature: number;
 };
 
 const INITIAL_USER: UserProfile = {
@@ -18,7 +24,19 @@ const INITIAL_USER: UserProfile = {
   rating: 0,
   reviews: 0,
   phoneNumber: "",
+  profileImageUrl: undefined,
+  address: undefined,
+  detailAddress: undefined,
+  zipCode: undefined,
+  temperature: 36.5,
 };
+
+const toDataUrl = (file: File): Promise<string> =>
+  new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target?.result as string);
+    reader.readAsDataURL(file);
+  });
 
 // --- Custom Hook ---
 export function useUserProfile(
@@ -27,7 +45,6 @@ export function useUserProfile(
 ) {
   const [error, setError] = useState<string | null>(null);
 
-  // meData로부터 user 정보를 파생
   const user: UserProfile =
     !isMeLoading && meData
       ? {
@@ -40,21 +57,54 @@ export function useUserProfile(
           phoneNumber: meData.phoneNumber
             ? String(meData.phoneNumber).trim()
             : INITIAL_USER.phoneNumber,
+          profileImageUrl: meData.profileImageUrl,
+          address: meData.address,
+          detailAddress: meData.detailAddress,
+          zipCode: meData.zipCode,
+          temperature: calcTemperature(
+            meData.rating ?? 0,
+            meData.reviews ?? 0,
+          ),
         }
       : INITIAL_USER;
 
-  // 프로필 저장
   const handleProfileSave = async (
     nickname: string,
     phoneNumber: string,
+    profileImageFile?: File | null,
+    address?: string,
+    detailAddress?: string,
+    zipCode?: string,
   ): Promise<void> => {
     try {
       setError(null);
+
+      let profileImageUrl: string | undefined;
+
+      if (profileImageFile) {
+        if (USE_MOCK_API) {
+          profileImageUrl = await toDataUrl(profileImageFile);
+        } else {
+          const uploadedUrls = await apiPost<string[]>("/api/s3/upload-url", {
+            uploadUrls: [profileImageFile.name],
+          });
+          await fetch(uploadedUrls[0], {
+            method: "PUT",
+            headers: { "Content-Type": profileImageFile.type },
+            body: profileImageFile,
+          });
+          profileImageUrl = uploadedUrls[0].split("?")[0];
+        }
+      }
+
       await apiPut("/api/users/me", {
         nickname,
         phoneNumber,
+        ...(profileImageUrl !== undefined && { profileImageUrl }),
+        ...(address !== undefined && { address }),
+        ...(detailAddress !== undefined && { detailAddress }),
+        ...(zipCode !== undefined && { zipCode }),
       });
-      // 저장 성공 후 상위 컴포넌트에서 meData를 다시 fetch해야 합니다
     } catch (e) {
       console.error("Failed to save profile:", e);
       const errorMsg = "프로필 저장에 실패했습니다.";

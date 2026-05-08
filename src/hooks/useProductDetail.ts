@@ -41,6 +41,7 @@ export function useProductDetail({
   const [bidError, setBidError] = useState<string | null>(null);
   const [isUsingMockData, setIsUsingMockData] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isConnected, setIsConnected] = useState(false);
 
   // productId 초기화
   useEffect(() => {
@@ -126,6 +127,7 @@ export function useProductDetail({
 
     clientRef.current.onConnect = () => {
       console.log("WebSocket connected");
+      setIsConnected(true);
 
       clientRef.current?.subscribe(
         `/topic/products/${productId}/product-bids`,
@@ -169,10 +171,15 @@ export function useProductDetail({
       );
     };
 
+    clientRef.current.onDisconnect = () => {
+      setIsConnected(false);
+    };
+
     clientRef.current.activate();
 
     return () => {
       clientRef.current?.deactivate();
+      setIsConnected(false);
       console.log("WebSocket disconnected");
     };
   }, [productId, product, isUsingMockData]);
@@ -331,5 +338,7 @@ export function useProductDetail({
     handleNextImage,
     handleBidAmountChange,
     handlePlaceBid,
+    isConnected,
+    isUsingMockData,
   };
 }

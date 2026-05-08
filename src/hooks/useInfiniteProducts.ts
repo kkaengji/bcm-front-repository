@@ -6,13 +6,7 @@ import { apiGet } from "@/lib/api";
 import { USE_MOCK_WHEN_EMPTY } from "@/lib/constants";
 import mockData from "@/mocks/products.json";
 
-type SortOption =
-  | "latest"
-  | "price-high"
-  | "price-low"
-  | "bid-count"
-  | "ending-soon"
-  | "ended";
+type SortOption = "latest" | "price-high" | "price-low" | "bid-count" | "ending-soon";
 
 const SORT_MAP: Record<SortOption, string> = {
   latest: "createdAt,desc",
@@ -20,16 +14,7 @@ const SORT_MAP: Record<SortOption, string> = {
   "price-high": "bidPrice,desc",
   "price-low": "bidPrice,asc",
   "bid-count": "bidCount,desc",
-  ended: "bidEndDate,desc",
 };
-
-const ENDED_STATUSES: Product["bidStatus"][] = [
-  "COMPLETED",
-  "NO_BIDDER",
-  "PAYMENT_WAITING",
-];
-
-const ACTIVE_STATUSES: Product["bidStatus"][] = ["NOT_BIDDED", "BIDDED"];
 
 export function useInfiniteProducts(
   searchQuery: string = "",
@@ -58,11 +43,7 @@ export function useInfiniteProducts(
     // Mock 데이터 폴백 로직
     const applyMockDataFallback = (currentPageNum: number) => {
       const all = (mockData as Product[]) ?? [];
-      const filteredAll = all.filter((product) =>
-        sortBy === "ended"
-          ? ENDED_STATUSES.includes(product.bidStatus)
-          : ACTIVE_STATUSES.includes(product.bidStatus),
-      );
+      const filteredAll = all;
       const startIdx = currentPageNum * pageSize;
       const endIdx = startIdx + pageSize;
       const fallbackProducts = filteredAll.slice(startIdx, endIdx);
@@ -85,11 +66,6 @@ export function useInfiniteProducts(
         params.set("page", String(currentPage));
         params.set("size", String(pageSize));
         params.set("sort", SORT_MAP[sortBy]);
-        if (sortBy === "ended") {
-          params.set("bidStatus", ENDED_STATUSES.join(","));
-        } else {
-          params.set("bidStatus", ACTIVE_STATUSES.join(","));
-        }
 
         const data = await apiGet<ProductListResponse>(
           `/api/products?${params.toString()}`,

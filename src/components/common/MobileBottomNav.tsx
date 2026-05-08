@@ -28,7 +28,7 @@ export default function MobileBottomNav() {
 
   return (
     <>
-      <nav className="bg-background/50 border-border fixed bottom-6 left-1/2 z-50 flex min-w-[220px] -translate-x-1/2 transform items-center rounded-full border px-7 py-3 shadow-md backdrop-blur-sm">
+      <nav className="fixed bottom-6 left-1/2 z-50 flex min-w-[220px] -translate-x-1/2 transform items-center rounded-full border border-white/10 bg-card/70 px-7 py-3 shadow-2xl shadow-black/40 backdrop-blur-xl">
         <div className="flex w-full items-end justify-between gap-4">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -36,8 +36,8 @@ export default function MobileBottomNav() {
 
             const baseClasses = `flex items-center justify-center p-1 transition-colors duration-200 rounded-full ${
               active
-                ? "text-red-600"
-                : "text-muted-foreground hover:text-red-400"
+                ? "text-primary"
+                : "text-muted-foreground hover:text-primary/70"
             }`;
 
             const IconSize = "h-8 w-8";

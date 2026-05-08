@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { apiGet, apiPatch } from "@/lib/api";
 import type { OrderDetail, UpdateShippingInfoRequest, User } from "@/types";
+import { toast } from "sonner";
 
 export interface WinningProduct {
   id: number;
@@ -66,7 +67,7 @@ export function usePaymentOrder(
 
       // 로그인하지 않은 경우 로그인 페이지로 리다이렉트
       if (!user) {
-        alert("로그인이 필요한 서비스입니다.");
+        toast.error("로그인이 필요한 서비스입니다.");
         router.push("/login");
         return;
       }
@@ -109,7 +110,7 @@ export function usePaymentOrder(
             error.message.includes("권한") ||
             error.message.includes("엔티티를 찾을 수 없습니다"))
         ) {
-          alert("접근 권한이 없거나 존재하지 않는 주문입니다.");
+          toast.error("접근 권한이 없거나 존재하지 않는 주문입니다.");
           router.push("/");
           return;
         }

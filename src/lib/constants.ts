@@ -16,11 +16,23 @@ export type ProductStatus = (typeof PRODUCT_STATUS)[number]["value"];
 export const ORDER_STATUS = [
   { label: "결제 대기", value: "PAYMENT_PENDING" },
   { label: "결제 완료", value: "PAID" },
+  { label: "배송 완료", value: "DELIVERED" },
   { label: "기간 만료", value: "EXPIRED" },
   { label: "취소됨", value: "CANCELLED" },
 ] as const;
 
 export type OrderStatus = (typeof ORDER_STATUS)[number]["value"];
+
+/**
+ * 온도 등급 (닭 마스코트 테마)
+ * 기준 온도: 36.5°C, rating 공식: 36.5 + (rating - 3) * 6
+ */
+export const TEMPERATURE_GRADES = [
+  { label: "알", emoji: "🥚", color: "text-blue-400", minTemp: -Infinity },
+  { label: "병아리", emoji: "🐣", color: "text-yellow-400", minTemp: 36.5 },
+  { label: "닭", emoji: "🐔", color: "text-orange-400", minTemp: 40 },
+  { label: "황금닭", emoji: "👑", color: "text-amber-500", minTemp: 46 },
+] as const;
 
 /**
  * 경매 상태 (판매 내역)

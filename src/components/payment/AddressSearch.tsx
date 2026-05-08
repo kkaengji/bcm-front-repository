@@ -45,7 +45,7 @@ export default function AddressSearch({
 
   // 모달 스타일 (Tailwind CSS 기준 예시)
   return (
-    <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
+    <div className="bg-opacity-50 fixed inset-0 z-[200] flex items-center justify-center bg-black">
       <div className="relative max-h-[90vh] w-full max-w-lg overflow-auto rounded bg-white p-4 shadow-lg">
         {/* 닫기 버튼 */}
         <button

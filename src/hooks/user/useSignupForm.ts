@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiPost } from "@/lib/api";
 import { AUTH_POLICIES } from "@/lib/constants";
+import { toast } from "sonner";
 
 export function useSignupForm() {
   const router = useRouter();
@@ -160,15 +161,15 @@ export function useSignupForm() {
 
       await apiPost("/api/auth/sign-up", signupData);
 
-      alert("회원가입에 성공했습니다. 로그인 페이지로 이동합니다.");
+      toast.success("회원가입에 성공했습니다. 로그인 페이지로 이동합니다.");
       router.push("/login");
     } catch (error) {
       const err = error as Error;
       // 403 Forbidden (중복 이메일 또는 기타 제한)
       if (err.message.includes("403")) {
-        alert("이미 가입된 이메일입니다.");
+        toast.error("이미 가입된 이메일입니다.");
       } else {
-        alert(err.message || "회원가입에 실패했습니다. 다시 시도해주세요.");
+        toast.error(err.message || "회원가입에 실패했습니다. 다시 시도해주세요.");
       }
     } finally {
       setIsLoading(false);

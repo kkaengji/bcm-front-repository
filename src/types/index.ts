@@ -28,6 +28,8 @@ export type {
   ProductListResponse,
   ProductFormData,
   Bid,
+  ProductAnswer,
+  ProductQuestion,
 } from "./product";
 
 // 주문 타입

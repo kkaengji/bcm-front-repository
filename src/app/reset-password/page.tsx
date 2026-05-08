@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle } from "lucide-react";
 import { apiPost, apiGet } from "@/lib/api";
+import { toast } from "sonner";
 
 function ResetPasswordContent() {
   const router = useRouter();
@@ -44,15 +45,15 @@ function ResetPasswordContent() {
     e.preventDefault();
 
     if (!token || !isValidToken) {
-      alert("유효하지 않은 접근입니다.");
+      toast.error("유효하지 않은 접근입니다.");
       return;
     }
     if (password.length < 8) {
-      alert("비밀번호는 최소 8자 이상이어야 합니다.");
+      toast.warning("비밀번호는 최소 8자 이상이어야 합니다.");
       return;
     }
     if (password !== confirmPassword) {
-      alert("비밀번호가 서로 일치하지 않습니다.");
+      toast.warning("비밀번호가 서로 일치하지 않습니다.");
       return;
     }
 
@@ -63,11 +64,11 @@ function ResetPasswordContent() {
         resetToken: token,
         password: password,
       });
-      alert("비밀번호가 성공적으로 변경되었습니다! 로그인 페이지로 이동합니다.");
+      toast.success("비밀번호가 성공적으로 변경되었습니다!");
       router.push("/login");
     } catch (error) {
       console.error(error);
-      alert("비밀번호 변경에 실패했습니다. 다시 시도해 주세요.");
+      toast.error("비밀번호 변경에 실패했습니다. 다시 시도해 주세요.");
     } finally {
       setIsLoading(false);
     }

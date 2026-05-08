@@ -8,6 +8,10 @@ export type MeResponse = {
   rating?: number;
   reviews?: number;
   phoneNumber?: string;
+  profileImageUrl?: string;
+  address?: string;
+  detailAddress?: string;
+  zipCode?: string;
   products?: Product[];
   productBids?: MypageProductBid[];
   orders?: Order[];

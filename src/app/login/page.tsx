@@ -8,6 +8,7 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { apiPost } from "@/lib/api";
 import { useAuth } from "@/hooks/user/useAuth";
 import { useLoginForm } from "@/hooks/user/useLoginForm";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +20,7 @@ import {
 
 export default function Login() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loginAsGuest } = useAuth();
   const { email, password, error, isLoading, handleChange, handleSubmit } =
     useLoginForm();
 
@@ -33,7 +34,7 @@ export default function Login() {
   const handleResetPassword = async () => {
     // 1. 이메일 입력 안 했으면 경고
     if (!resetEmail) {
-      alert("이메일을 입력해주세요.");
+      toast.warning("이메일을 입력해주세요.");
       return;
     }
 
@@ -44,13 +45,13 @@ export default function Login() {
         email: resetEmail,
       });
 
-      alert("이메일이 성공적으로 전송되었습니다. 메일창을 확인해주세요.");
+      toast.success("이메일이 성공적으로 전송되었습니다. 메일창을 확인해주세요.");
 
       setIsResetOpen(false);
       setResetEmail("");
     } catch (error) {
       console.error(error);
-      alert("이메일 전송에 실패했습니다. 입력한 이메일을 다시 확인해주세요.");
+      toast.error("이메일 전송에 실패했습니다. 입력한 이메일을 다시 확인해주세요.");
     } finally {
       setIsResetLoading(false);
     }
@@ -137,6 +138,28 @@ export default function Login() {
             {isLoading ? "로그인 중..." : "로그인"}
           </Button>
         </form>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="border-border w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background text-muted-foreground px-2">또는</span>
+          </div>
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          className="w-full rounded-lg"
+          onClick={() => {
+            loginAsGuest();
+            router.push("/");
+          }}
+        >
+          게스트로 시작하기
+        </Button>
 
         {/* Footer */}
         <div className="space-y-2 text-center">
