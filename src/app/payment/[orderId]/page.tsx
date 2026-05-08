@@ -55,6 +55,7 @@ export default function CheckoutPage({
     orderId,
     winningProduct.winningBid,
     !isLoading && orderId > 0 && sdkLoaded,
+    user?.email,
   );
 
   // 주소 찾기 완료 핸들러

@@ -16,16 +16,16 @@ export interface TossPaymentsWidgets {
     selector: string;
     variantKey: string;
   }) => Promise<{ destroy?: () => void }>;
-  renderAgreement: (options: { selector: string }) => Promise<void>;
+  renderAgreement: (options: { selector: string; variantKey?: string }) => Promise<void>;
 }
 
 declare global {
   interface Window {
-    TossPayments: (clientKey: string) => {
+    TossPayments: ((clientKey: string) => {
       widgets: (options: {
         customerKey: string;
       }) => Promise<TossPaymentsWidgets>;
-    };
+    }) & { ANONYMOUS: string };
   }
 }
 
@@ -55,7 +55,8 @@ const TOSS_CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "";
 export function useTossPayments(
   orderId: number,
   totalAmount: number,
-  isPageReady: boolean = true, // DOM이 준비되었는지 여부
+  isPageReady: boolean = true,
+  customerKey?: string,
 ): UseTossPaymentsReturn {
   const [widgetReady, setWidgetReady] = useState(false);
   const widgetsRef = useRef<TossPaymentsWidgets | null>(null);
@@ -88,13 +89,10 @@ export function useTossPayments(
       }
 
       try {
-        const customerKey = `customer_${orderId}_${Date.now()}`;
+        const key = customerKey ?? window.TossPayments.ANONYMOUS;
 
-        // 토스페이먼츠 초기화
         const tossPayments = window.TossPayments(TOSS_CLIENT_KEY);
-
-        // 결제위젯 초기화
-        const widgets = await tossPayments.widgets({ customerKey });
+        const widgets = await tossPayments.widgets({ customerKey: key });
         widgetsRef.current = widgets;
 
         // 결제 금액 설정
@@ -124,6 +122,7 @@ export function useTossPayments(
         // 약관 UI 렌더링
         await widgets.renderAgreement({
           selector: "#agreement",
+          variantKey: "AGREEMENT",
         });
 
         setWidgetReady(true);
@@ -153,7 +152,7 @@ export function useTossPayments(
       setWidgetReady(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderId, isPageReady]); // totalAmount는 초기화 시에만 사용
+  }, [orderId, isPageReady, customerKey]); // totalAmount는 초기화 시에만 사용
 
   // 결제 금액 변경시 업데이트
   useEffect(() => {
