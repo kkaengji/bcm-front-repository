@@ -44,10 +44,7 @@ interface UseTossPaymentsReturn {
   setAmount: (amount: number) => Promise<void>;
 }
 
-// 토스페이먼츠 클라이언트 키
-const TOSS_CLIENT_KEY =
-  process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ||
-  "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
+const TOSS_CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "";
 
 /**
  * 토스페이먼츠 결제 위젯을 관리하는 훅
@@ -77,6 +74,11 @@ export function useTossPayments(
 
       // 이미 초기화되었거나 필수 값이 없으면 return
       if (isInitializedRef.current || !orderId || !totalAmount) {
+        return;
+      }
+
+      if (!TOSS_CLIENT_KEY) {
+        console.error("NEXT_PUBLIC_TOSS_CLIENT_KEY가 설정되지 않았습니다.");
         return;
       }
 

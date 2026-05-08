@@ -48,9 +48,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TOSS_SECRET_KEY 미설정 시 공개 테스트 키로 폴백 (실제 결제 없음)
-    const secretKey =
-      process.env.TOSS_SECRET_KEY || "test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6";
+    const secretKey = process.env.TOSS_SECRET_KEY;
+    if (!secretKey) {
+      return NextResponse.json(
+        { message: "결제 서버 설정 오류입니다." },
+        { status: 500 },
+      );
+    }
 
     // Base64 인코딩 (시크릿 키 + 콜론)
     const encodedKey = Buffer.from(`${secretKey}:`).toString("base64");

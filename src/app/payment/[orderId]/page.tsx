@@ -137,7 +137,7 @@ export default function CheckoutPage({
         orderName: winningProduct.title,
         successUrl: `${window.location.origin}/payment/success?myOrderId=${orderId}&amount=${winningProduct.winningBid}`,
         failUrl: `${window.location.origin}/payment/fail?myOrderId=${orderId}`,
-        customerEmail: "customer@example.com",
+        customerEmail: user?.email ?? "",
         customerName: deliveryInfo.name,
         customerMobilePhone: deliveryInfo.phone.replace(/-/g, ""),
       });
