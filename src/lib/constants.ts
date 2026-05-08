@@ -92,10 +92,12 @@ export const API_BASE_URL =
 
 /**
  * 포트폴리오/데모 모드에서 실제 API 대신 목데이터를 사용할지 여부
- * - 환경변수: NEXT_PUBLIC_USE_MOCK_API
- * - "true"일 때만 활성화
+ * - 환경변수: NEXT_PUBLIC_USE_MOCK_API="true"로 명시적 활성화
+ * - 또는 프로덕션 빌드에서 NEXT_PUBLIC_API_URL이 없으면 자동 활성화
  */
-export const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
+export const USE_MOCK_API =
+  process.env.NEXT_PUBLIC_USE_MOCK_API === "true" ||
+  (process.env.NODE_ENV === "production" && !process.env.NEXT_PUBLIC_API_URL);
 
 /**
  * 서버에서 빈 결과를 반환할 때 목데이터를 사용할지 여부
