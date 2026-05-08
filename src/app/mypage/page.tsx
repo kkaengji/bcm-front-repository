@@ -9,6 +9,16 @@ import { useProductHistory } from "@/hooks/user/useProductHistory";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useReview } from "@/hooks/useReview";
 import { apiGet, apiPost } from "@/lib/api";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // 컴포넌트
 import SidebarMenu from "@/components/mypage/SidebarMenu";
@@ -24,10 +34,9 @@ export default function MyPage() {
   const { count: wishlistCount } = useWishlist();
   const { isReviewed } = useReview();
 
-  // 배송완료 상태 (productId Set)
   const [deliveredProductIds, setDeliveredProductIds] = useState<Set<number>>(new Set());
-  // 리뷰 완료 상태 (productId Set — 구매/판매 각각 다른 reviewType이지만 UI 단에선 productId로 관리)
   const [reviewedProductIds, setReviewedProductIds] = useState<Set<number>>(new Set());
+  const [pendingPayment, setPendingPayment] = useState<{ orderId: number | string; productName: string } | null>(null);
 
   // Custom Hooks
   const {
@@ -110,13 +119,28 @@ export default function MyPage() {
     checkAll();
   }, [completedOrders, sellingCompleted, isReviewed]);
 
-  // 결제하기 핸들러
   const handlePayment = (orderId: number | string, productName: string) => {
-    if (!confirm(`'${productName}' 상품의 결제 페이지로 이동하시겠습니까?`)) return;
-    router.push(`/payment/${orderId}`);
+    setPendingPayment({ orderId, productName });
   };
 
   return (
+    <>
+    <AlertDialog open={!!pendingPayment} onOpenChange={(open) => { if (!open) setPendingPayment(null); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>결제 페이지로 이동</AlertDialogTitle>
+          <AlertDialogDescription>
+            <span className="font-medium text-foreground">&apos;{pendingPayment?.productName}&apos;</span> 상품 결제를 진행하시겠습니까?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>취소</AlertDialogCancel>
+          <AlertDialogAction onClick={() => { router.push(`/payment/${pendingPayment?.orderId}`); setPendingPayment(null); }}>
+            확인
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     <main className="bg-background min-h-screen py-8 md:py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
@@ -172,5 +196,6 @@ export default function MyPage() {
         </div>
       </div>
     </main>
+    </>
   );
 }
