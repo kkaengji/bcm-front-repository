@@ -18,16 +18,16 @@ export interface TossPaymentsWidgets {
     selector: string;
     variantKey: string;
   }) => Promise<{ destroy?: () => void }>;
-  renderAgreement: (options: { selector: string }) => Promise<void>;
+  renderAgreement: (options: { selector: string; variantKey?: string }) => Promise<void>;
 }
 
 declare global {
   interface Window {
-    TossPayments: (clientKey: string) => {
+    TossPayments: ((clientKey: string) => {
       widgets: (options: {
         customerKey: string;
       }) => Promise<TossPaymentsWidgets>;
-    };
+    }) & { ANONYMOUS: string };
   }
 }
 

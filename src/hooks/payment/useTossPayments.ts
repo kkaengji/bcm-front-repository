@@ -1,33 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-
-// 토스페이먼츠 SDK 타입 정의
-export interface TossPaymentsWidgets {
-  setAmount: (amount: { currency: string; value: number }) => Promise<void>;
-  requestPayment: (options: {
-    orderId: string;
-    orderName: string;
-    successUrl: string;
-    failUrl: string;
-    customerEmail: string;
-    customerName: string;
-    customerMobilePhone: string;
-  }) => Promise<void>;
-  renderPaymentMethods: (options: {
-    selector: string;
-    variantKey: string;
-  }) => Promise<{ destroy?: () => void }>;
-  renderAgreement: (options: { selector: string; variantKey?: string }) => Promise<void>;
-}
-
-declare global {
-  interface Window {
-    TossPayments: ((clientKey: string) => {
-      widgets: (options: {
-        customerKey: string;
-      }) => Promise<TossPaymentsWidgets>;
-    }) & { ANONYMOUS: string };
-  }
-}
+import type { TossPaymentsWidgets } from "@/types/payment";
 
 interface UseTossPaymentsReturn {
   widgetReady: boolean;
