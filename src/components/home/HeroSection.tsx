@@ -44,8 +44,8 @@ export default function HeroSection() {
             가장 늦게, 가장 용감하게. 블라인드 치킨 마켓에서 승리하세요.
           </p>
 
-          {user && (
-            <div className="flex items-center gap-3 pt-2 sm:pt-4">
+          <div className="flex items-center gap-3 pt-2 sm:pt-4">
+            {user ? (
               <Button
                 size="lg"
                 asChild
@@ -53,8 +53,17 @@ export default function HeroSection() {
               >
                 <Link href="/products/create">상품 등록</Link>
               </Button>
-            </div>
-          )}
+            ) : (
+              <Button
+                size="lg"
+                variant="outline"
+                asChild
+                className="rounded-xl font-semibold"
+              >
+                <Link href="/login">로그인 후 상품을 등록하세요</Link>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </section>
