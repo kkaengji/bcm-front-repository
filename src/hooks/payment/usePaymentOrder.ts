@@ -90,7 +90,7 @@ export function usePaymentOrder(
           estimatedDelivery: "3-5 영업일",
         });
 
-        // 배송 정보가 있으면 미리 채워넣기
+        // 배송 정보가 있으면 미리 채워넣기, 없으면 유저 프로필에서 가져오기
         if (orderData.shippingInfo) {
           setDeliveryInfo({
             name: orderData.shippingInfo.name,
@@ -99,6 +99,25 @@ export function usePaymentOrder(
             detailAddress: orderData.shippingInfo.detailAddress,
             postalCode: orderData.shippingInfo.zipCode,
           });
+        } else {
+          try {
+            const me = await apiGet<{
+              nickname?: string;
+              phoneNumber?: string;
+              address?: string;
+              detailAddress?: string;
+              zipCode?: string;
+            }>("/api/users/me");
+            setDeliveryInfo({
+              name: me.nickname ?? "",
+              phone: me.phoneNumber ?? "",
+              address: me.address ?? "",
+              detailAddress: me.detailAddress ?? "",
+              postalCode: me.zipCode ?? "",
+            });
+          } catch {
+            // 유저 프로필 조회 실패 시 빈 폼으로 진행
+          }
         }
       } catch (error) {
         console.error("주문 정보 조회 실패:", error);
