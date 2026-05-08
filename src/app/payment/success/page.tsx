@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Check } from "lucide-react";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiGet } from "@/lib/api";
 import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/hooks/user/useAuth";
 import type { OrderDetail } from "@/types";
@@ -52,10 +52,14 @@ function SuccessContent() {
         const data = await apiGet<OrderDetail>(`/api/orders/${orderId}`);
         setOrderData(data);
 
-        await apiPost(`/api/payments/TOSS`, {
-          paymentKey,
-          orderId: tossOrderId,
-          amount: Number(amount),
+        await fetch("/api/payments/confirm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            paymentKey,
+            orderId: tossOrderId,
+            amount: Number(amount),
+          }),
         });
       } catch (error) {
         console.error("주문 정보 조회 실패:", error);

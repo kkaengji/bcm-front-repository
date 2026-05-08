@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Script from "next/script";
 import { useAuth } from "@/hooks/user/useAuth";
 import { usePaymentOrder } from "@/hooks/payment/usePaymentOrder";
 import { useTossPayments } from "@/hooks/payment/useTossPayments";
@@ -17,6 +18,7 @@ export default function CheckoutPage({
 }) {
   const { user, isLoading: authLoading } = useAuth();
   const [resolvedOrderId, setResolvedOrderId] = useState<number>(0);
+  const [sdkLoaded, setSdkLoaded] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -52,7 +54,7 @@ export default function CheckoutPage({
   const { widgetReady, requestPayment } = useTossPayments(
     orderId,
     winningProduct.winningBid,
-    !isLoading && orderId > 0,
+    !isLoading && orderId > 0 && sdkLoaded,
   );
 
   // 주소 찾기 완료 핸들러
@@ -149,6 +151,12 @@ export default function CheckoutPage({
   };
 
   return (
+    <>
+    <Script
+      src="https://js.tosspayments.com/v2/standard"
+      strategy="afterInteractive"
+      onLoad={() => setSdkLoaded(true)}
+    />
     <main className="bg-background min-h-screen py-6 sm:py-8 md:py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {globalError && (
@@ -192,5 +200,6 @@ export default function CheckoutPage({
         )}
       </div>
     </main>
+    </>
   );
 }

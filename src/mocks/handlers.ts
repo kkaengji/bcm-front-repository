@@ -1,4 +1,5 @@
 import type { Product, ProductListResponse, CategoryListResponse, ProductQuestion, ProductAnswer } from "@/types";
+import { calcTemperature } from "@/lib/utils";
 import {
   MOCK_PRODUCTS,
   MOCK_CATEGORIES,
@@ -254,7 +255,14 @@ function handleCreateProduct(body: unknown): { id: number } {
     productStatus: data.productStatus ?? "GOOD",
     thumbnail: thumbnailUrl,
     imageUrls: imageUrlList.map((url, i) => ({ id: id * 100 + i, imageUrl: url })),
-    user: { ...MOCK_DEMO_SELLER, nickname: _getCurrentNickname() },
+    user: {
+      ...MOCK_DEMO_SELLER,
+      nickname: _getCurrentNickname(),
+      temperature: calcTemperature(
+        _mockMeOverrides.rating ?? MOCK_ME.rating,
+        _mockMeOverrides.reviews ?? MOCK_ME.reviews,
+      ),
+    },
     createdAt: new Date().toISOString(),
     bidEndDate,
     modifiedAt: new Date().toISOString(),
@@ -293,6 +301,8 @@ function handleGetCategories(): CategoryListResponse {
 function handleGetMe() {
   const nickname = _mockMeOverrides.nickname ?? _getCurrentNickname();
   const phoneNumber = _mockMeOverrides.phoneNumber ?? MOCK_ME.phoneNumber;
+  const rating = _mockMeOverrides.rating ?? MOCK_ME.rating;
+  const reviews = _mockMeOverrides.reviews ?? MOCK_ME.reviews;
   return {
     ...MOCK_ME,
     nickname,
@@ -301,8 +311,9 @@ function handleGetMe() {
     address: _mockMeOverrides.address ?? MOCK_ME.address,
     detailAddress: _mockMeOverrides.detailAddress ?? MOCK_ME.detailAddress,
     zipCode: _mockMeOverrides.zipCode ?? MOCK_ME.zipCode,
-    rating: _mockMeOverrides.rating ?? MOCK_ME.rating,
-    reviews: _mockMeOverrides.reviews ?? MOCK_ME.reviews,
+    rating,
+    reviews,
+    temperature: calcTemperature(rating, reviews),
   };
 }
 

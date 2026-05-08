@@ -101,6 +101,18 @@ export function useProductHistory(
     [state.orders],
   );
 
+  // 결제 대기/완료 주문이 있는 상품은 입찰중 목록에서 제외
+  const purchaseBidding = useMemo(() => {
+    const orderedProductIds = new Set(
+      state.orders
+        .map((order) => order.product?.id)
+        .filter((id): id is number => id !== undefined),
+    );
+    return state.purchaseBidding.filter(
+      (bid) => !orderedProductIds.has(bid.productId),
+    );
+  }, [state.purchaseBidding, state.orders]);
+
   return {
     // 판매 관련
     sellingProducts: state.sellingProducts,
@@ -109,7 +121,7 @@ export function useProductHistory(
     sellingCompleted,
 
     // 구매 관련
-    purchaseBidding: state.purchaseBidding,
+    purchaseBidding,
     orders: state.orders,
     paymentPendingOrders,
     completedOrders,

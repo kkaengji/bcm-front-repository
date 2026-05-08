@@ -4,7 +4,6 @@ import Footer from "@/components/common/Footer";
 import "./globals.css";
 import type { Metadata } from "next";
 import { AuthProvider } from "@/hooks/user/useAuth";
-import Script from "next/script";
 import { Inter, Noto_Sans_KR } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -33,12 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" className={`h-full ${inter.variable} ${notoSansKR.variable}`}>
-      <head>
-        <Script
-          src="https://js.tosspayments.com/v2/standard"
-          strategy="afterInteractive"
-        />
-      </head>
+      <head />
       <body className="flex h-full flex-col">
         <AuthProvider>
           <Navigation />

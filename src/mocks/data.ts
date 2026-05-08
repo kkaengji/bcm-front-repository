@@ -94,7 +94,7 @@ export const MOCK_DEMO_SELLER = {
   email: "demo@example.com",
   role: "USER" as const,
   phoneNumber: "01012345678",
-  temperature: 36.5,
+  temperature: 47.3, // calcTemperature(4.8, 12) — MOCK_ME rating/reviews 기준
   location: "서울 금천구",
 };
 
@@ -583,6 +583,12 @@ const DEMO_WINNERS: WinnerDetails[] = [
     productName: "게이밍 PC AMD 라이젠 5 9600X + RTX 5070 풀세팅",
     productStatus: "GOOD",
   },
+  {
+    bidPrice: 370000,
+    productId: "9",
+    productName: "삼성 오디세이 G5 QHD 165Hz 게이밍 모니터 32인치 (C32G55T)",
+    productStatus: "GOOD",
+  },
 ];
 
 export const MOCK_ME = {
@@ -660,11 +666,11 @@ export const MOCK_ORDERS: Record<number, OrderDetail> = {
     bidPrice: 370000,
     orderStatus: "PAID",
     shippingInfo: {
-      name: "홍길동",
+      name: "데모유저",
       phoneNumber: "01012345678",
-      zipCode: "06035",
-      address: "서울특별시 강남구 테헤란로 152",
-      detailAddress: "101호",
+      zipCode: "06236",
+      address: "서울특별시 강남구 테헤란로 152 (역삼동)",
+      detailAddress: "강남파이낸스센터 27층",
     },
     product: {
       id: 9,

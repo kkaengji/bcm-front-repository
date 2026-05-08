@@ -48,17 +48,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 토스페이먼츠 시크릿 키 (환경변수에서 가져오기)
-    // 테스트 환경에서는 test_gsk_로 시작하는 시크릿 키 사용
-    const secretKey = process.env.TOSS_SECRET_KEY;
-
-    if (!secretKey) {
-      console.error("환경변수 TOSS_SECRET_KEY가 설정되지 않았습니다.");
-      return NextResponse.json(
-        { message: "서버 설정 오류: 결제 키가 누락되었습니다." },
-        { status: 500 },
-      );
-    }
+    // TOSS_SECRET_KEY 미설정 시 공개 테스트 키로 폴백 (실제 결제 없음)
+    const secretKey =
+      process.env.TOSS_SECRET_KEY || "test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6";
 
     // Base64 인코딩 (시크릿 키 + 콜론)
     const encodedKey = Buffer.from(`${secretKey}:`).toString("base64");
