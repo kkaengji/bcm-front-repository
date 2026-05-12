@@ -15,16 +15,16 @@ export default function SidebarMenu() {
   const { user } = useAuth();
 
   return (
-    <aside className="shrink-0 lg:w-52">
-      <div className="sticky top-16 space-y-1">
-        <h2 className="text-foreground mb-4 text-lg font-black">마이페이지</h2>
+    <aside className="min-w-0 shrink-0 lg:w-52">
+      <div className="sticky top-16 space-y-3">
+        <h2 className="text-foreground text-lg font-black">마이페이지</h2>
 
-        <nav className="space-y-1">
+        <nav className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 lg:mx-0 lg:block lg:space-y-1 lg:overflow-visible lg:px-0 lg:pb-0">
           {menus.map((menu) => (
             <a
               key={menu.href}
               href={menu.href}
-              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/30 hover:text-foreground"
+              className="flex shrink-0 items-center gap-2 rounded-xl border border-white/8 bg-card/50 px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/30 hover:text-foreground lg:border-0 lg:bg-transparent"
             >
               <menu.icon className="h-4 w-4 shrink-0" />
               {menu.label}
@@ -34,7 +34,7 @@ export default function SidebarMenu() {
 
         {/* 상품 등록 바로가기 */}
         {user && (
-          <div className="mt-4 border-t border-white/8 pt-4">
+          <div className="border-t border-white/8 pt-3 lg:mt-4 lg:pt-4">
             <Button
               asChild
               size="sm"

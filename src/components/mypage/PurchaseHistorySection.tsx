@@ -46,16 +46,16 @@ export default function PurchaseHistorySection({
 
       {/* 요약바 */}
       <div className="mb-6 rounded-xl border border-white/8 bg-card p-4">
-        <div className="grid grid-cols-4 text-center text-sm">
+        <div className="grid grid-cols-2 gap-y-4 text-center text-sm sm:grid-cols-4 sm:gap-y-0">
           <div className="border-border border-r">
             <p className={getStatClass(totalCount, false, true)}>전체</p>
             <p className={getStatClass(totalCount, false, false)}>{totalCount}</p>
           </div>
-          <div>
+          <div className="sm:border-border sm:border-r">
             <p className={getStatClass(paymentPendingOrders.length, true, true)}>결제대기</p>
             <p className={getStatClass(paymentPendingOrders.length, true, false)}>{paymentPendingOrders.length}</p>
           </div>
-          <div>
+          <div className="border-border border-r">
             <p className={getStatClass(purchaseBidding.length, false, true)}>입찰중</p>
             <p className={getStatClass(purchaseBidding.length, false, false)}>{purchaseBidding.length}</p>
           </div>
@@ -66,7 +66,7 @@ export default function PurchaseHistorySection({
         </div>
       </div>
 
-      {showDetails && (
+      {(showDetails || paymentPendingOrders.length > 0) && (
         <>
           {/* 결제 대기 */}
           <div className="mb-8">
@@ -98,81 +98,85 @@ export default function PurchaseHistorySection({
             )}
           </div>
 
-          {/* 입찰중 */}
-          <div className="mb-6">
-            <h3 className="text-muted-foreground mb-3 text-sm font-medium">입찰중</h3>
-            {purchaseBidding.length === 0 ? (
-              <div className="rounded-xl border border-white/8 bg-card py-8 text-center">
-                <p className="text-muted-foreground text-sm">현재 입찰 진행중인 상품이 없습니다.</p>
+          {showDetails && (
+            <>
+              {/* 입찰중 */}
+              <div className="mb-6">
+                <h3 className="text-muted-foreground mb-3 text-sm font-medium">입찰중</h3>
+                {purchaseBidding.length === 0 ? (
+                  <div className="rounded-xl border border-white/8 bg-card py-8 text-center">
+                    <p className="text-muted-foreground text-sm">현재 입찰 진행중인 상품이 없습니다.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {purchaseBidding.map((product) => (
+                      <ProductListItem
+                        key={product.productId}
+                        id={product.productId}
+                        name={product.productName}
+                        price={product.price}
+                        image={product.thumbnail || product.imageUrls?.[0]?.imageUrl}
+                        subText={`내 입찰 횟수: ${product.bidCount}`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="space-y-2">
-                {purchaseBidding.map((product) => (
-                  <ProductListItem
-                    key={product.productId}
-                    id={product.productId}
-                    name={product.productName}
-                    price={product.price}
-                    image={product.thumbnail || product.imageUrls?.[0]?.imageUrl}
-                    subText={`내 입찰 횟수: ${product.bidCount}`}
-                  />
-                ))}
+
+              {/* 종료 */}
+              <div>
+                <h3 className="text-muted-foreground mb-3 text-sm font-medium">종료</h3>
+                {completedOrders.length === 0 ? (
+                  <div className="rounded-xl border border-white/8 bg-card py-8 text-center">
+                    <p className="text-muted-foreground text-sm">종료된 상품이 없습니다.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {completedOrders.map((order) => {
+                      const productId = order.product?.id;
+                      const isDelivered = productId !== undefined && deliveredProductIds.has(productId);
+                      const isReviewed = productId !== undefined && reviewedProductIds.has(productId);
+
+                      let subText = "결제 완료";
+                      if (order.orderStatus === "DELIVERED" || isDelivered) subText = "배송 완료";
+                      else if (order.orderStatus === "EXPIRED") subText = "기간 만료";
+
+                      const actionNode = isDelivered ? (
+                        isReviewed ? (
+                          <Badge variant="secondary" className="text-xs">리뷰 완료</Badge>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              setReviewTarget({
+                                productId: productId!,
+                                productName: order.productName,
+                              })
+                            }
+                          >
+                            리뷰 작성
+                          </Button>
+                        )
+                      ) : undefined;
+
+                      return (
+                        <ProductListItem
+                          key={order.orderId}
+                          id={order.product?.id || order.orderId}
+                          name={order.productName}
+                          price={order.bidPrice}
+                          image={order.thumbnail || order.imageUrls?.[0]?.imageUrl}
+                          subText={subText}
+                          actionNode={actionNode}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-
-          {/* 종료 */}
-          <div>
-            <h3 className="text-muted-foreground mb-3 text-sm font-medium">종료</h3>
-            {completedOrders.length === 0 ? (
-              <div className="rounded-xl border border-white/8 bg-card py-8 text-center">
-                <p className="text-muted-foreground text-sm">종료된 상품이 없습니다.</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {completedOrders.map((order) => {
-                  const productId = order.product?.id;
-                  const isDelivered = productId !== undefined && deliveredProductIds.has(productId);
-                  const isReviewed = productId !== undefined && reviewedProductIds.has(productId);
-
-                  let subText = "결제 완료";
-                  if (order.orderStatus === "DELIVERED" || isDelivered) subText = "배송 완료";
-                  else if (order.orderStatus === "EXPIRED") subText = "기간 만료";
-
-                  const actionNode = isDelivered ? (
-                    isReviewed ? (
-                      <Badge variant="secondary" className="text-xs">리뷰 완료</Badge>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          setReviewTarget({
-                            productId: productId!,
-                            productName: order.productName,
-                          })
-                        }
-                      >
-                        리뷰 작성
-                      </Button>
-                    )
-                  ) : undefined;
-
-                  return (
-                    <ProductListItem
-                      key={order.orderId}
-                      id={order.product?.id || order.orderId}
-                      name={order.productName}
-                      price={order.bidPrice}
-                      image={order.thumbnail || order.imageUrls?.[0]?.imageUrl}
-                      subText={subText}
-                      actionNode={actionNode}
-                    />
-                  );
-                })}
-              </div>
-            )}
-          </div>
+            </>
+          )}
         </>
       )}
 

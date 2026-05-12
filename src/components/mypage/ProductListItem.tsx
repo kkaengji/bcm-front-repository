@@ -29,10 +29,10 @@ export function ProductListItem({
   actionNode,
 }: ProductListItemProps) {
   return (
-    <div className="flex items-center justify-between rounded-xl border border-white/8 bg-card/50 p-3 transition-colors hover:bg-card">
+    <div className="flex flex-col rounded-xl border border-white/8 bg-card/50 p-3 transition-colors hover:bg-card sm:flex-row sm:items-center sm:justify-between">
       <Link
         href={`${linkPrefix}/${id}`}
-        className="flex flex-1 items-center gap-3 pr-3"
+        className="flex min-w-0 flex-1 items-center gap-3 sm:pr-3"
       >
         {/* 상품 이미지 */}
         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-muted">
@@ -69,7 +69,9 @@ export function ProductListItem({
       </Link>
 
       {actionNode && (
-        <div className="shrink-0 border-l border-white/8 pl-3">{actionNode}</div>
+        <div className="mt-3 w-full border-t border-white/8 pt-3 [&>button]:w-full sm:mt-0 sm:w-auto sm:shrink-0 sm:border-l sm:border-t-0 sm:pl-3 sm:pt-0 sm:[&>button]:w-auto">
+          {actionNode}
+        </div>
       )}
     </div>
   );

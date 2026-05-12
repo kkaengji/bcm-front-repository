@@ -54,16 +54,16 @@ export default function SalesHistorySection({
 
       {/* 요약 바 */}
       <div className="mb-6 rounded-xl border border-white/8 bg-card p-4">
-        <div className="grid grid-cols-4 text-center text-sm">
+        <div className="grid grid-cols-2 gap-y-4 text-center text-sm sm:grid-cols-4 sm:gap-y-0">
           <div className="border-border border-r">
             <p className={getStatClass(totalCount, false, true)}>전체</p>
             <p className={getStatClass(totalCount, false, false)}>{totalCount}</p>
           </div>
-          <div>
+          <div className="sm:border-border sm:border-r">
             <p className={getStatClass(sellingPending.length, true, true)}>결제확인</p>
             <p className={getStatClass(sellingPending.length, true, false)}>{sellingPending.length}</p>
           </div>
-          <div>
+          <div className="border-border border-r">
             <p className={getStatClass(sellingBidding.length, false, true)}>판매중</p>
             <p className={getStatClass(sellingBidding.length, false, false)}>{sellingBidding.length}</p>
           </div>
@@ -74,7 +74,7 @@ export default function SalesHistorySection({
         </div>
       </div>
 
-      {showDetails && (
+      {(showDetails || sellingPending.length > 0) && (
         <>
           {/* 결제확인 */}
           <div className="mb-6">
@@ -101,87 +101,91 @@ export default function SalesHistorySection({
             )}
           </div>
 
-          {/* 판매중 */}
-          <div className="mb-6">
-            <h3 className="text-muted-foreground mb-3 text-sm font-medium">판매중</h3>
-            {sellingBidding.length === 0 ? (
-              <div className="rounded-xl border border-white/8 bg-card py-8 text-center">
-                <p className="text-muted-foreground text-sm">현재 판매중인 상품이 없습니다.</p>
+          {showDetails && (
+            <>
+              {/* 판매중 */}
+              <div className="mb-6">
+                <h3 className="text-muted-foreground mb-3 text-sm font-medium">판매중</h3>
+                {sellingBidding.length === 0 ? (
+                  <div className="rounded-xl border border-white/8 bg-card py-8 text-center">
+                    <p className="text-muted-foreground text-sm">현재 판매중인 상품이 없습니다.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {sellingBidding.map((product) => (
+                      <ProductListItem
+                        key={product.id}
+                        id={product.id}
+                        name={product.name}
+                        price={product.bidPrice ?? product.startPrice}
+                        image={product.thumbnail}
+                        subText={`전체 입찰 횟수: ${product.bidCount}`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="space-y-2">
-                {sellingBidding.map((product) => (
-                  <ProductListItem
-                    key={product.id}
-                    id={product.id}
-                    name={product.name}
-                    price={product.bidPrice ?? product.startPrice}
-                    image={product.thumbnail}
-                    subText={`전체 입찰 횟수: ${product.bidCount}`}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
 
-          {/* 종료 */}
-          <div>
-            <h3 className="text-muted-foreground mb-3 text-sm font-medium">종료</h3>
-            {sellingCompleted.length === 0 ? (
-              <div className="rounded-xl border border-white/8 bg-card py-8 text-center">
-                <p className="text-muted-foreground text-sm">종료된 상품이 없습니다.</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {sellingCompleted.map((product) => {
-                  const isDelivered = deliveredProductIds.has(product.id);
-                  const isReviewed = reviewedProductIds.has(product.id);
-                  const isNoBidder = product.bidStatus === "NO_BIDDER";
+              {/* 종료 */}
+              <div>
+                <h3 className="text-muted-foreground mb-3 text-sm font-medium">종료</h3>
+                {sellingCompleted.length === 0 ? (
+                  <div className="rounded-xl border border-white/8 bg-card py-8 text-center">
+                    <p className="text-muted-foreground text-sm">종료된 상품이 없습니다.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {sellingCompleted.map((product) => {
+                      const isDelivered = deliveredProductIds.has(product.id);
+                      const isReviewed = reviewedProductIds.has(product.id);
+                      const isNoBidder = product.bidStatus === "NO_BIDDER";
 
-                  let actionNode: React.ReactNode = undefined;
-                  if (!isNoBidder) {
-                    if (isDelivered) {
-                      actionNode = isReviewed ? (
-                        <Badge variant="secondary" className="text-xs">리뷰 완료</Badge>
-                      ) : (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            setReviewTarget({ productId: product.id, productName: product.name })
-                          }
-                        >
-                          리뷰 작성
-                        </Button>
+                      let actionNode: React.ReactNode = undefined;
+                      if (!isNoBidder) {
+                        if (isDelivered) {
+                          actionNode = isReviewed ? (
+                            <Badge variant="secondary" className="text-xs">리뷰 완료</Badge>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                setReviewTarget({ productId: product.id, productName: product.name })
+                              }
+                            >
+                              리뷰 작성
+                            </Button>
+                          );
+                        } else {
+                          actionNode = (
+                            <Button
+                              size="sm"
+                              disabled={deliveringId === product.id}
+                              onClick={() => handleDeliver(product.id)}
+                            >
+                              {deliveringId === product.id ? "처리 중..." : "배송완료 처리"}
+                            </Button>
+                          );
+                        }
+                      }
+
+                      return (
+                        <ProductListItem
+                          key={product.id}
+                          id={product.id}
+                          name={product.name}
+                          price={product.bidPrice ?? product.startPrice}
+                          image={product.thumbnail}
+                          subText={isNoBidder ? "유찰" : isDelivered ? "배송 완료" : "결제완료"}
+                          actionNode={actionNode}
+                        />
                       );
-                    } else {
-                      actionNode = (
-                        <Button
-                          size="sm"
-                          disabled={deliveringId === product.id}
-                          onClick={() => handleDeliver(product.id)}
-                        >
-                          {deliveringId === product.id ? "처리 중..." : "배송완료 처리"}
-                        </Button>
-                      );
-                    }
-                  }
-
-                  return (
-                    <ProductListItem
-                      key={product.id}
-                      id={product.id}
-                      name={product.name}
-                      price={product.bidPrice ?? product.startPrice}
-                      image={product.thumbnail}
-                      subText={isNoBidder ? "유찰" : isDelivered ? "배송 완료" : "결제완료"}
-                      actionNode={actionNode}
-                    />
-                  );
-                })}
+                    })}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
         </>
       )}
 

@@ -192,8 +192,8 @@ export default function ProfileSection({
 
   return (
     <div className="mb-8 rounded-2xl border border-white/8 bg-card p-6 shadow-lg shadow-black/10 md:p-8">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-1 items-center gap-4">
+      <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 flex-1 items-center gap-4">
           {/* 아바타 */}
           {isLoading ? (
             <Skeleton className="h-14 w-14 shrink-0 rounded-full" />
@@ -242,7 +242,7 @@ export default function ProfileSection({
             <Button
               variant="outline"
               size="sm"
-              className="gap-2 rounded-lg border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+              className="w-full gap-2 rounded-lg border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground sm:w-auto"
             >
               <Edit2 className="h-4 w-4" /> 프로필 수정
             </Button>
@@ -358,7 +358,7 @@ export default function ProfileSection({
 
       {/* 활동 통계 카드 */}
       {statItems && !isLoading && (
-        <div className="mt-6 grid grid-cols-4 gap-3">
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {statItems.map(({ label, value }) => (
             <div
               key={label}

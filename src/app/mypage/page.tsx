@@ -71,15 +71,29 @@ export default function MyPage() {
     try {
       const res = await apiGet<{ deliveredProductIds: number[] }>("/api/reviews/delivered-ids");
       if (res?.deliveredProductIds) {
-        setDeliveredProductIds(new Set(res.deliveredProductIds));
+        return new Set(res.deliveredProductIds);
       }
     } catch {
       // mock 또는 API 미지원 시 무시
     }
+    return null;
   }, []);
 
   useEffect(() => {
-    fetchDeliveredIds();
+    let isMounted = true;
+
+    async function loadDeliveredIds() {
+      const ids = await fetchDeliveredIds();
+      if (isMounted && ids) {
+        setDeliveredProductIds(ids);
+      }
+    }
+
+    void loadDeliveredIds();
+
+    return () => {
+      isMounted = false;
+    };
   }, [fetchDeliveredIds]);
 
   // 배송완료 처리
@@ -94,7 +108,10 @@ export default function MyPage() {
     // 여기서는 refetch로 rating 반영
     await refetch();
     // 배송완료 목록도 재조회
-    fetchDeliveredIds();
+    const ids = await fetchDeliveredIds();
+    if (ids) {
+      setDeliveredProductIds(ids);
+    }
   }, [refetch, fetchDeliveredIds]);
 
   // 리뷰 완료 여부 확인 (completedOrders의 productId 기준)
@@ -141,7 +158,7 @@ export default function MyPage() {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-    <main className="bg-background min-h-screen py-8 md:py-12">
+    <main className="bg-background min-h-screen pb-28 pt-8 md:py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
           {/* === 왼쪽 사이드바 === */}
